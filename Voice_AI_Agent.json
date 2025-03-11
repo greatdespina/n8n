@@ -1,0 +1,316 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        0
+      ],
+      "id": "66e674ff-38b4-4a5a-a658-30e95d4c5878",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        100,
+        220
+      ],
+      "id": "0a65eda4-9521-45bd-97da-bb139d2d09d1",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9n7QRgvY6PMRLZYx",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.headers['x-forwarded-for'] }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        360
+      ],
+      "id": "8723ab89-6a1f-44c2-be3b-008f8b570651",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "test@gmail.com",
+          "mode": "list",
+          "cachedResultName": "test@gmail.com"
+        },
+        "timeMin": "={{ $fromAI('start_time') }}",
+        "timeMax": "={{ $fromAI('end_time') }}",
+        "options": {
+          "timezone": {
+            "__rl": true,
+            "value": "America/Toronto",
+            "mode": "list",
+            "cachedResultName": "America/Toronto"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        220
+      ],
+      "id": "cb723b8d-a5d0-5bf3-9e8d-106d37e52fd6",
+      "name": "Availability Tool",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "r28uVDBPoQfNSKZo",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI('user_email') }}",
+        "subject": "Appointment Details ",
+        "message": "=<h2>Dear User {{ $fromAI('user_name') }}</h2>\n<p>\nThanks for calling us we will update you as soon as possible \n</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        820,
+        220
+      ],
+      "id": "f05c476e-913a-4e5e-8626-dad73b48cc6e",
+      "name": "Gmail",
+      "webhookId": "0774a1b2-e965-4948-8bb6-9df1cf28dbb1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ctKSBx0lGyMLZyyK",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "test@gmail.com",
+          "mode": "list",
+          "cachedResultName": "test@gmail.com"
+        },
+        "start": "= {{ $fromAI('start_time') }}",
+        "end": "= {{ $fromAI('end_time') }}",
+        "useDefaultReminders": false,
+        "additionalFields": {
+          "attendees": [
+            "= {{ $fromAI('user_email') }}"
+          ],
+          "description": "this event is User request of query",
+          "location": "= {{ $fromAI('user_location') }}",
+          "summary": "= {{ $fromAI('user_purpuse') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        220
+      ],
+      "id": "9bff4073-b620-4014-a66c-4e358098097d",
+      "name": "Event Creator",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "r28uVDBPoQfNSKZo",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "test@gmail.com",
+          "mode": "list",
+          "cachedResultName": "test@gmail.com"
+        },
+        "options": {
+          "timeMin": "={{ $fromAI('start_time') }}",
+          "timeMax": "= {{ $fromAI('end_time') }}",
+          "timeZone": {
+            "__rl": true,
+            "value": "America/Toronto",
+            "mode": "list",
+            "cachedResultName": "America/Toronto"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        220
+      ],
+      "id": "109dff69-2142-4536-997e-b6fb1e66af0e",
+      "name": "event Watcher",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "r28uVDBPoQfNSKZo",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Role and Action:\nService Agent\n\nIf the user asks about checking availability for a Consulting and implementation services or Analytics & Insights service:\n\nUse the Availability Tool to check if there is an available slot. Remember, every booking must be made for at least one hour and office hour is just morning 9 AM to 6PM.\nIf no booking is available for the desired slot:\n\nUse the Event Watcher Tool to check if there are available slots in the upcoming week.\nPrompt the user with the available slots.\nIf the user agrees to a slot:\n\nAsk for any additional details (if needed) and proceed to book the appointment using the Event Creator Tool.\nSend a confirmation email to the user using Gmail.\ntoday is {{ $now.format('D t') }}\nQuery:\n{{ $json.query.query }}\n\nData:\n{{ $json.body.toJsonString() }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        160,
+        0
+      ],
+      "id": "46fefbb0-4d1f-46cd-aaed-7e6c3a296dce",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dd1d5131-e461-4f6e-812b-c4b174e6d132",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        20
+      ],
+      "id": "6705fcfc-82d7-462e-aca9-e6987ee2c1d3",
+      "name": "Webhook",
+      "webhookId": "dd1d5131-e461-4f6e-812b-c4b174e6d132"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availability Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Creator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "event Watcher": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a5f994b0-e29a-4f0d-997c-ac050ef08649",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "165364ada367806c3ea119814d893f26ba565b529f95916a983d7980db11cb6a"
+  },
+  "id": "iq5y0gtfg8MbejAL",
+  "tags": []
+}
